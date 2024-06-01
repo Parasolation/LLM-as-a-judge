@@ -1,0 +1,11 @@
+{
+  "correct_False": "0 / 100 = 0.0%",
+  "correct_True": "0 / 100 = 0.0%",
+  "correct_average": "0.0%",
+  "correct_both": "0 / 100 = 0.0%",
+  "equal": "100 / 100 = 100.0%",
+  "kappa_False": 0.0,
+  "kappa_True": 0.0,
+  "kappa_average": 0.0,
+  "kappa_agreement": NaN
+}
