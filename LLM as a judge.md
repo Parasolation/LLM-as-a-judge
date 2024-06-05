@@ -9,7 +9,6 @@
 - [Qwen1.5-7B-Chat](https://huggingface.co/Qwen/Qwen1.5-7B-Chat)
 - [Qwen1.5-14B-Chat](https://huggingface.co/Qwen/Qwen1.5-14B-Chat)
 - [Llama-3-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
-- [Nanbeige2-8B-Chat](https://huggingface.co/Nanbeige/Nanbeige2-8B-Chat)
 - [ChatGLM3-6B](https://huggingface.co/THUDM/chatglm3-6b)
 - [InternLM2-chat-7B](https://huggingface.co/internlm/internlm2-chat-7b)
 - [Deepseek-llm-7B-chat](https://huggingface.co/deepseek-ai/deepseek-llm-7b-chat)

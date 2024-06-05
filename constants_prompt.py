@@ -118,7 +118,3 @@ def build_autoj_input(prompt, resp1, resp2=None, prompt2=None, resp1_2=None, res
         user_msg = protocol_mapping[protocol].format(prompt1=prompt, response1=resp1, response_another1=resp2, prompt2=prompt2, response2=resp1_2, response_another2=resp2_2)
     return llama2_wrapper(user_msg, )
 
-
-if __name__ == '__main__':
-    t = build_autoj_input("instruction", "resp1", "resp2", "pairwise_tie")
-    print(t)
