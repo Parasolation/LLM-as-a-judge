@@ -1,53 +1,61 @@
 
 
-#### 模型部分：
+### 模型选择
 
-通过OpenCompass2.0大语言模型评测榜单的客观综合和主观综合部分初选出了以下几个开源模型，囿于硬件性能，我只选择了模型大小14B以下的模型。
-
-加上给定Benchmark所提供的两个用于评估大模型表现的两个大模型Autoj-13B以及PandaLM-7B-v1
+通过OpenCompass2.0大语言模型评测榜单的客观综合和主观综合部分初选出了以下几个开源模型，囿于硬件性能，我们只选择了模型大小14B以下的模型。在此基础上，添加上前天开源的GLM4-9B-chat模型以及给定的Benchmark所提供的两个用于评估的两个模型Autoj-13B以及PandaLM-7B-v1。
 
 - [Qwen1.5-7B-Chat](https://huggingface.co/Qwen/Qwen1.5-7B-Chat)
 - [Qwen1.5-14B-Chat](https://huggingface.co/Qwen/Qwen1.5-14B-Chat)
 - [Llama-3-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)
 - [ChatGLM3-6B](https://huggingface.co/THUDM/chatglm3-6b)
+- [GLM-4-9b-chat](https://huggingface.co/THUDM/glm-4-9b-chat)
 - [InternLM2-chat-7B](https://huggingface.co/internlm/internlm2-chat-7b)
 - [Deepseek-llm-7B-chat](https://huggingface.co/deepseek-ai/deepseek-llm-7b-chat)
 - [Autoj-13B](https://huggingface.co/GAIR/autoj-13b)
 - [PandaLM-7B](https://huggingface.co/WeOpenML/PandaLM-7B-v1)
 
-#### 代码部分：
+### 模型基础跑分
+
+使用上述模型分别以Auto-J评估代码中的Prompt以及我们自己写的Prompt在4个给定的Benchmark上进行跑分。Base模型跑分结果如下表：
+
+其中PandaLM-7B支持的最大Token数为2048，小于大多数输入的Token数，输出结果几乎不可解析，故而未列出来。
+
+由下表可以看到GLM4的平均表现是最好的，加上Qwen1.5以及LLama3的表现尚可且微调支持最多，故而选择GLM4-9B-Chat、Qwen1.5-7B-Chat以及Llama-3-8B-Instruct进行微调。
+
+![](tables/table1.png)
+
+### 微调数据集选择
+
+微调数据集我们选择了Auto-J提供的trainset以及BAAI/JudgeLM-100K数据集。我们选择先用Qwen1.5-7B-Chat上使用两个数据集进行训练，其中Auto-J trainset约有3500条数据，训练到接近5个epoch时收敛，JudgeLM-100K则取了前16500条数据，与Auto-J训练5个epoch的数据量对齐。发现以JudgeLM-100K训练的结果均优于以Auto-J trainset训练的结果，同时考虑到其数据量足够大，问题类型足够广，所以后续训练集均采用BAAI/JudgeLM-100K。
+
+其数据组织格式如下：（只截取需要使用的部分）
+
+![](tables/JudgeLM-100K.png)
+
+其中Score为List，是由GPT4给出的对Answer1和Answer2的评分。
+
+通过我们的Prompt将question_body，answer1_body和answer2_body拼接起来得到输入。而将分数更高的作为回答序号作为标签，如果两者分数相等则标签为[0]。
+
+### 微调方法选择与超参数设置
+
+碍于硬件，微调方法选择4bit量化QLoRA，GLM4同时也采用了LoRA方法以作对比，因为BAAI/JudgeLM-100K数据集量足够所以epoch设置为1。
+
+LoRA微调中lora_rank=8，learning_rate=1e-4，max_seq_length=8192
+
+QLoRA微调中lora_rank=64， learning_rate=2e-4，max_seq_length=8192
+
+### 模型微调结果
+
+![](tables/table2.png)
+
+![](tables/table3.png)
+
+### 模型微调结果分析
+
+由上述微调模型跑分结果来看，不同模型在除LLMBar下Neighbor，GTPinst以及Mamual以外的测试集上的评分均有较大的提升，且大多随着微调epoch的增大而增大。这在Qwen1.5-7B-Chat以及Llama-3-8B-Instruct上的提升尤为明显，同样的在上述三个数据集上的表现的下降也尤为明显。猜测是训练集的多数问题的类型与上述3种问题的类型存在偏差，使得模型微调后表现下降。
 
 
 
+**GLM4-9B-Chat**使用LoRA在BAAI/JudgeLM-100K训练集上微调0.1个epoch（10k条数据）后的综合表现在微调后的模型中最好，但同样在上述三个类型的问题上表现较有下降，所以得到的平均Acc和F1不如base模型。
 
-
-
-
-
-
-#### 运行结果：
-
-| Model                | Auto-J | PandaLM | LLMBar_natural | *LLMBar_neighbor* | *LLMBar_gptinst* | *LLMBar_gptout* | *LLMBar_manual* | *MTBench* | 备注————————————                                 |
-| :------------------- | :----- | :------ | :------------- | :---------------- | :--------------- | :-------------- | :-------------- | :-------- | :----------------------------------------------- |
-| Qwen1.5-7B-Chat      | 48.99  | 62.36   | 61.00          | 22.39             | 29.35            | 48.94           | 30.43           | 54.61     |                                                  |
-| Qwen1.5-14B-Chat     | 48.64  | 70.57   | 72.00          | 23.13             | 25.00            | 51.06           | 32.61           | 43.99     | 本身结果不错，但格式错误太多了，需要微调学习格式 |
-| Llama-3-8B-Instruct  | 55.24  | 70.17   | 71.00          | 16.42             | 22.83            | 57.45           | 28.26           | 46.65     |                                                  |
-| ChatGLM3-6B          | 42.53  | 51.65   | 52.00          | 23.88             | 33.70            | 48.94           | 32.61           | 36.15     | 格式错误太多                                     |
-| InternLM2-chat-7B    | 42.10  | 52.55   | 54.00          | 15.67             | 34.78            | 36.17           | 23.91           | 52.55     |                                                  |
-| Deepseek-llm-7B-chat | 36.64  | 50.55   | 43.00          | 29.85             | 29.35            | 40.43           | 26.09           | 30.04     | 格式错误太多                                     |
-| Auto-J-13B           | 59.99  | 69.67   | 66.00          | 20.15             | 19.57            | 42.55           | 23.91           | 57.35     |                                                  |
-| PandaLM-7B           |        |         |                |                   |                  |                 |                 |           |                                                  |
-| 原论文结果：         |        |         |                |                   |                  |                 |                 |           |                                                  |
-| GPT 4-0613           | 56.3   | 78.68   | 93.5           | 64.2              | 76.6             | 76.6            | 75.0            | 66.9      |                                                  |
-| Auto-J-13B           | 54.6   | 71.47   | 70.0           | 20.9              | 21.7             | 46.8            | 23.9            | 51.7      |                                                  |
-| PandaLM-7B           | 40.0   | 67.57   | 59.0           | 16.5              | 21.7             | 42.6            | 26.1            | 55.2      |                                                  |
-|                      |        |         |                |                   |                  |                 |                 |           |                                                  |
-
-
-
-初步运行结果如表：
-
-可以发现Qwen1.5-7B-chat和Qwen1.5-14B-chat以及Llama-3-8B-Instruct效果还不错，但是有很多回答并未按prompt所提供的格式正常生成。所以后续在该3个模型上进行微调。
-
-训练集选择Auto-J数据库里的train set，共有3000+条数据，按照过去的经验，数据量比较够了。
-
+使用LoRA在BAAI/JudgeLM-100K训练集上微调1个epoch除开上述三个测试集的情况下综合表现最好，但在上述三个类型的问题上表现下降严重，或许可以根据不同的问题类型以选择合适的模型。
