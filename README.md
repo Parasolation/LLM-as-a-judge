@@ -22,13 +22,11 @@ NLP Project, tested on PandaLM testset, Auto-J testset, MT-bench and LLMBar benc
 
 由下表可以看到GLM4的平均表现是最好的，加上Qwen1.5以及LLama3的表现尚可且微调支持最多，故而选择GLM4-9B-Chat、Qwen1.5-7B-Chat以及Llama-3-8B-Instruct进行微调。
 
-![](D:/Paradox/研一下/自然语言处理/LLM-as-a-judge/tables/table1.png)
+![](tables/table1.png)
 
 ### Prompt 选择
 
 本次实验先采用Auto-J提供的prompt以及解析结果的脚本进行baseline的构建，发现该prompt会将大模型的判断放到最后这使得大模型的数据较长（普遍输出200-300个tokens）导致推理时间花费较长，以及prompt中所规定的格式对于部分大模型有难度，这使得大模型未能生成所要求的格式导致结果难以提取。所以我们选择更换我们自己写的prompt，我们新的prompt只要求模型输出[0]，[1]，[2]中的一个，这使得输出大大缩短（只需要3个tokens）同时结构足够简单，提取不出结果的情况大大减少。
-
-
 
 ### 微调数据集选择
 
@@ -36,7 +34,7 @@ NLP Project, tested on PandaLM testset, Auto-J testset, MT-bench and LLMBar benc
 
 其数据组织格式如下：（只截取需要使用的部分）
 
-![](D:/Paradox/研一下/自然语言处理/LLM-as-a-judge/tables/JudgeLM-100K.png)
+![](tables/JudgeLM-100K.png)
 
 其中Score为List，是由GPT4给出的对Answer1和Answer2的评分。
 
@@ -52,15 +50,13 @@ QLoRA微调中lora_rank=64， learning_rate=2e-4，max_seq_length=8192
 
 ### 模型微调结果
 
-![](D:/Paradox/研一下/自然语言处理/LLM-as-a-judge/tables/table2.png)
+![](tables/table2.png)
 
-![](D:/Paradox/研一下/自然语言处理/LLM-as-a-judge/tables/table3.png)
+![](tables/table3.png)
 
 ### 模型微调结果分析
 
 由上述微调模型跑分结果来看，不同模型在除LLMBar下Neighbor，GTPinst以及Mamual以外的测试集上的评分均有较大的提升，且大多随着微调epoch的增大而增大。这在Qwen1.5-7B-Chat以及Llama-3-8B-Instruct上的提升尤为明显，同样的在上述三个数据集上的表现的下降也尤为明显。猜测是训练集的多数问题的类型与上述3种问题的类型存在偏差，使得模型微调后表现下降。
-
-
 
 **GLM4-9B-Chat**使用LoRA在BAAI/JudgeLM-100K训练集上微调0.1个epoch（10k条数据）后的综合表现在微调后的模型中最好，但同样在上述三个类型的问题上表现较有下降，所以得到的平均Acc和F1不如base模型。
 
